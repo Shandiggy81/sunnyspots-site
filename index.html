@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>SunnySpots Melbourne</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    html,body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    }
+    .header {
+      text-align: center;
+      padding: 2rem 1rem 1rem 1rem;
+      color: #ff6b35;
+      background: rgba(255,255,255,0.95);
+      border-radius: 0 0 1.2rem 1.2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    }
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2.3rem;
+    }
+    .header p {
+      margin: 0;
+      color: #444;
+      font-size: 1.1rem;
+    }
+    .filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .filter-btn {
+      background: #fff;
+      color: #ff6b35;
+      border: 2px solid #ff6b35;
+      border-radius: 2rem;
+      padding: 0.5rem 1.1rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      outline: none;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      color: #fff;
+    }
+    #map {
+      height: 70vh;
+      min-height: 350px;
+      width: 95vw;
+      max-width: 900px;
+      margin: 0 auto 1.5rem auto;
+      border-radius: 1.2rem;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.13);
+      border: 4px solid #fff;
+    }
+    /* Leaflet popup customizations */
+    .leaflet-popup-content-wrapper {
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(255,107,53,0.09);
+    }
+    .popup-title {
+      font-weight: bold;
+      color: #ff6b35;
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
+    }
+    .popup-description {
+      color: #333;
+      margin-bottom: 0.35rem;
+      font-size: 0.98rem;
+    }
+    .popup-tags {
+      margin-bottom: 0.4rem;
+    }
+    .tag {
+      display: inline-block;
+      margin-right: 0.18em;
+      font-size: 1.1em;
+    }
+    .popup-link {
+      display: inline-block;
+      margin-top: 0.15em;
+      color: #f7931e;
+      text-decoration: underline;
+      font-size: 0.97em;
+      font-weight: 500;
+    }
+    @media (max-width: 700px) {
+      #map {
+        height: 55vh;
+        min-height: 220px;
+      }
+      .header h1 { font-size: 1.5rem; }
+      .filter-btn { font-size: 1rem; padding: 0.4rem 0.7rem; }
+    }
+    @media (max-width: 400px) {
+      .header { padding: 1rem 0.2rem 0.7rem 0.2rem;}
+      #map { width: 99vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>☀️ SunnySpots Melbourne</h1>
+    <p>Discover the best sunny, cozy, and vibe-filled venues in Melbourne</p>
+  </div>
+  <div class="filter-container">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="☀️">☀️ Sunny</button>
+    <button class="filter-btn" data-filter="🐶">🐶 Dog-Friendly</button>
+    <button class="filter-btn" data-filter="🔥">🔥 Fireplace</button>
+    <button class="filter-btn" data-filter="🎶">🎶 Live Music</button>
+    <button class="filter-btn" data-filter="♿">♿ Accessible</button>
+    <button class="filter-btn" data-filter="🍺">🍺 Beer Garden</button>
+    <button class="filter-btn" data-filter="🍹">🍹 Cocktails</button>
+  </div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Venue data
+    const venues = [
+      {
+        "name": "The Standard Hotel",
+        "lat": -37.7963,
+        "lng": 144.9835,
+        "description": "Iconic Fitzroy pub with a firelit beer garden and plenty of pup action. A northside classic.",
+        "tags": ["☀️", "🐶", "🔥"],
+        "link": "https://www.instagram.com/thestandardhotel/"
+      },
+      {
+        "name": "Rooftop Bar",
+        "lat": -37.8153,
+        "lng": 144.9648,
+        "description": "CBD's most famous rooftop with cinema vibes and city skyline views. Perfect for golden hour drinks.",
+        "tags": ["☀️", "🎶", "♿"],
+        "link": "https://www.rooftopcinema.com.au/"
+      },
+      {
+        "name": "The Provincial Hotel",
+        "lat": -37.8023,
+        "lng": 144.9789,
+        "description": "Spacious Fitzroy beer garden that gets sun all day. Dog heaven with craft beer and casual eats.",
+        "tags": ["☀️", "🍺", "🐶"],
+        "link": "https://www.instagram.com/theprovincialhotel/"
+      },
+      {
+        "name": "Naked in the Sky",
+        "lat": -37.8202,
+        "lng": 144.9665,
+        "description": "Cheeky rooftop bar in Fitzroy with cocktails and unbeatable afternoon sun. Gets busy fast!",
+        "tags": ["☀️", "🍹"],
+        "link": "https://www.nakedfor.com/"
+      },
+      {
+        "name": "The Everleigh",
+        "lat": -37.8087,
+        "lng": 144.9821,
+        "description": "Cozy Gertrude Street cocktail den with a crackling fireplace. Intimate vibes for winter nights.",
+        "tags": ["🔥", "🍹", "♿"],
+        "link": "https://www.theeverleigh.com/"
+      },
+      {
+        "name": "Cherry Bar",
+        "lat": -37.8081,
+        "lng": 144.9633,
+        "description": "Legendary underground live music venue. Sweaty, loud, and absolutely perfect for gig lovers.",
+        "tags": ["🎶", "🍺"],
+        "link": "https://www.cherrybar.com.au/"
+      },
+      {
+        "name": "St Kilda Bowls Club",
+        "lat": -37.8677,
+        "lng": 144.9736,
+        "description": "Retro bowls club with sunny greens, craft beer, and the most relaxed vibes by the bay.",
+        "tags": ["☀️", "🍺", "🐶", "♿"],
+        "link": "https://www.stkildabowlsclub.com.au/"
+      },
+      {
+        "name": "The Lincoln Hotel",
+        "lat": -37.8193,
+        "lng": 144.9587,
+        "description": "Classic Carlton pub with cozy fireplaces, live music, and perfectly poured pints.",
+        "tags": ["🔥", "🍺", "🎶"],
+        "link": "https://www.thelincoln.com.au/"
+      },
+      {
+        "name": "Garden State Hotel",
+        "lat": -37.8285,
+        "lng": 144.9755,
+        "description": "Huge Richmond beer garden with fire pits, cocktails, and plenty of sun. A true crowd-pleaser.",
+        "tags": ["☀️", "🔥", "🍺", "🍹"],
+        "link": "https://www.gardenstatehotel.com.au/"
+      },
+      {
+        "name": "Section 8",
+        "lat": -37.8124,
+        "lng": 144.9696,
+        "description": "Laneway container bar with DJs, cocktails, and a laid-back outdoor vibe.",
+        "tags": ["☀️", "🎶", "🍹"],
+        "link": "https://www.section8.com.au/"
+      }
+    ];
+
+    // Map initialization
+    const map = L.map('map').setView([-37.8136, 144.9631], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Marker and filter logic
+    let markers = [];
+
+    function addMarkers(filter) {
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+      venues.forEach(venue => {
+        if (filter === 'all' || venue.tags.includes(filter)) {
+          const marker = L.marker([venue.lat, venue.lng]).addTo(map);
+          marker.bindPopup(
+            '<div class="popup-title">' + venue.name + '</div>' +
+            '<div class="popup-description">' + venue.description + '</div>' +
+            '<div class="popup-tags">' + venue.tags.map(tag => '<span class="tag">' + tag + '</span>').join(' ') + '</div>' +
+            '<a class="popup-link" href="' + venue.link + '" target="_blank">More Info</a>'
+          );
+          markers.push(marker);
+        }
+      });
+    }
+
+    // Initial marker load
+    addMarkers('all');
+
+    // Filter button logic
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        addMarkers(this.getAttribute('data-filter'));
+      });
+    });
+  </script>
+</body>
+</html>
