@@ -357,7 +357,7 @@
         // ==========================================
         // 🔑 PASTE YOUR API KEY HERE - REPLACE THE TEXT BELOW
         // ==========================================
-        const WEATHER_API_KEY = '1b48e46c6c55ef2f397a607f45766e39';
+        const WEATHER_API_KEY = '1b4acb64a8452d48e5b9aab1dc01070c';
         
         // Weather caching systems
         const WEATHER_CACHE = new Map();
@@ -487,7 +487,8 @@
                 return cached.data;
             }
             
-            try {const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=1b484e6c65c5ef2397a696747566e639&units=metric`);
+            try {const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}&units=metric`);
+
 
                  
   
